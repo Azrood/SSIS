@@ -37,3 +37,23 @@ def modulation(pseudo_rand_array: List[int], message: bytes, img: np.ndarray) ->
     for i,char in zip(pseudo_rand_array, message):
         img[i//columns][i%columns] = img[i//columns][i%columns]*char
     return img
+
+def interleaver(pseudo_rand_array: List[int], array: np.ndarray):
+    """Random permutations for interleaving an array according to a pseudo random sequence"""
+    dims = array.shape
+    flat_array = array.flatten()
+    matrix = np.zeros(array.size, int)
+    for index, position in enumerate(pseudo_rand_array):
+        matrix[index] = flat_array[position]
+    matrix = matrix.reshape(dims)
+    return matrix
+
+def deinterleaver(pseudo_rand_array: List[int], array: np.ndarray):
+    """Random permutations for deinterleaving an array according to a pseudo random sequence"""
+    dims = array.shape
+    flat_array = array.flatten()
+    matrix = np.zeros(array.size, int)
+    for index, position in enumerate(pseudo_rand_array):
+        matrix[position] = flat_array[index]
+    matrix = matrix.reshape(dims)
+    return matrix
