@@ -1,19 +1,19 @@
 import hashlib
 import random
 from base64 import b64decode, b64encode
+from binascii import hexlify
 from typing import List
 
 import numpy as np
 from Crypto.Cipher import Salsa20
-from Crypto.Util.number import bytes_to_long
 
 
-def extract_keys(key: str):
+def extract_keys(key: bytes) -> str:
     """Derive a key1,key2, key3 from a password str and returns a hex tuple (key1, key2, key3) """
     digest = hashlib.sha256(key).digest()
-    key1 = hex(bytes_to_long(digest))
+    key1 = hexlify(digest)
     key2 = hashlib.sha256(digest).hexdigest()
-    key3 = hashlib.sha256(hashlib.sha256(digest)).hexdigest()
+    key3 = hashlib.sha256(hashlib.sha256(digest).digest()).hexdigest()
     return key1, key2, key3
 
 def encrypt(msg: bytes, key: bytes) -> bytes:
@@ -28,17 +28,18 @@ def decrypt(msg: bytes, key: bytes) -> bytes:
     decrypted_message = cipher.decrypt(msg)
     return decrypted_message
 
-def prng(message: bytes, seed: int, image: np.ndarray) -> List[int]:
+def prng(length_message: int, seed: int, cover_image_size: int) -> List[int]:
     """Generates an array of random locations with pseudo-random sequence based on seed"""
     random.seed(seed)
-    random_location_array = random.sample(range(0, image.size), len(message))
+    random_location_array = random.sample(range(0, cover_image_size), length_message)
     return random_location_array
 
-def modulation(pseudo_rand_array: List[int], message: str, img: np.ndarray) -> np.ndarray:
+def modulation(pseudo_rand_array: List[int], message: str, cover_img: np.ndarray) -> np.ndarray:
     """Modulates a message into an image with a pseudo random sequence array """
+    img = cover_img.copy()
     blue_plane = extract_planes(img)
     for i, char in zip(pseudo_rand_array, message):
-        blue_plane[i] = int(ord(char))
+        blue_plane[i] = ord(char)
     img[...,2] = blue_plane.reshape(img[...,2].shape).copy()
     return img
 
@@ -85,6 +86,7 @@ def imouto(base64_img: str, path: str) -> None :
         f.write(img)
 
 def extract_planes(planes: np.ndarray) -> np.ndarray:
-    """Return a n x m x 3 array, each n x m array is a plane R,G,B"""
-    R, G, B = planes[..., 0], planes[..., 1], planes[..., 2]
-    return B.flatten()
+    """Return a n x m array, Blue channel if jpeg, alpha channel 
+    if PNG since the last array is either the Blue or the alpha"""
+    blue__or_alpha_plane = planes[..., -1]
+    return blue__or_alpha_plane.flatten()
