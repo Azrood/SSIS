@@ -40,7 +40,7 @@ def modulation(pseudo_rand_array: List[int], message: str, cover_img: np.ndarray
     blue_plane = extract_planes(img)
     for i, char in zip(pseudo_rand_array, message):
         blue_plane[i] = ord(char)
-    img[...,2] = blue_plane.reshape(img[...,2].shape).copy()
+    img[...,-1] = blue_plane.reshape(img[...,-1].shape).copy()
     return img
 
 def demodulation(pseudo_rand_array: List[int], cover_img: np.ndarray, img: np.ndarray) -> str:
